@@ -27,14 +27,13 @@ services:
       - mongodb
 
   frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    restart: unless-stopped
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
+  build:
+    context: .
+    dockerfile: frontend/Dockerfile
+    args:
+      VITE_API_URL: http://4.240.111.186:5000
+  ports:
+    - "3000:80"
 
 volumes:
   mongo_data:
