@@ -32,8 +32,8 @@ services:
     dockerfile: frontend/Dockerfile
     args:
       VITE_API_URL: http://4.240.111.186:5000
-  ports:
-    - "3000:80"
+    ports:
+      - "3000:80"
 
 volumes:
   mongo_data:
