@@ -20,20 +20,22 @@ services:
       MONGODB_URI: mongodb://mongodb:27017/insurance_management
       JWT_ACCESS_SECRET: replace-me
       JWT_REFRESH_SECRET: replace-me
-      CLIENT_ORIGIN: http://localhost:3000
+      CLIENT_ORIGIN: http://4.240.111.186:3000
       UPLOAD_DIR: uploads
       LOG_LEVEL: info
     depends_on:
       - mongodb
 
   frontend:
-  build:
-    context: .
-    dockerfile: frontend/Dockerfile
-    args:
-      VITE_API_URL: http://4.240.111.186:5000
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: http://4.240.111.186:5000
     ports:
       - "3000:80"
+    depends_on:
+      - backend
 
 volumes:
   mongo_data:
