@@ -1,5 +1,5 @@
 name: Build and deploy Frontend to Azure Web App - insurance-app-1
-
+ 
 on:
   push:
     branches:
