@@ -15,8 +15,6 @@ services:
       CLIENT_ORIGIN: http://4.240.111.186:3000
       UPLOAD_DIR: uploads
       LOG_LEVEL: info
-    depends_on:
-      - mongodb
 
   frontend:
     build:
