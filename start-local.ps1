@@ -8,6 +8,8 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backendPath = Join-Path $root 'backend'
 $frontendPath = Join-Path $root 'frontend'
 $logsPath = Join-Path $root 'logs'
+$statePath = Join-Path $logsPath 'local-state.json'
+$runStamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 
 function Ensure-Command {
   param([string]$Name)
@@ -131,9 +133,9 @@ Write-Host 'Using local MongoDB service...'
     Start-Sleep -Seconds 2
   }
 
-  if (-not (Test-NetConnection -ComputerName '127.0.0.1' -Port 27017 -InformationLevel Quiet)) {
-    throw 'Timed out waiting for the local MongoDB service to accept connections on port 27017.'
-  }
+if (-not (Test-NetConnection -ComputerName '127.0.0.1' -Port 27017 -InformationLevel Quiet)) {
+  throw 'Timed out waiting for the local MongoDB service to accept connections on port 27017.'
+}
 }
 
 $env:NODE_ENV = 'development'
@@ -147,8 +149,20 @@ $env:CLIENT_ORIGIN = 'http://localhost:3000'
 $env:UPLOAD_DIR = 'uploads'
 $env:LOG_LEVEL = 'info'
 
-$backendOut = Join-Path $logsPath 'backend.out.log'
-$backendErr = Join-Path $logsPath 'backend.err.log'
+Write-Host 'Seeding sample admin and insurance plans...'
+Push-Location $root
+$seedOutput = & npm run seed --workspace backend 2>&1
+$seedExitCode = $LASTEXITCODE
+Pop-Location
+
+if ($seedExitCode -ne 0) {
+  throw "Seed script failed:`n$seedOutput"
+}
+
+Write-Host 'Seed completed successfully.'
+
+$backendOut = Join-Path $logsPath "backend-$runStamp.out.log"
+$backendErr = Join-Path $logsPath "backend-$runStamp.err.log"
 New-Item -ItemType File -Force -Path $backendOut, $backendErr | Out-Null
 
 Write-Host 'Starting backend...'
@@ -165,7 +179,8 @@ Wait-ForHttpOk -Url 'http://localhost:5000/health' -TimeoutSeconds 120
 $env:VITE_API_URL = 'http://localhost:5000/api/v1'
 
 $frontendOut = Join-Path $logsPath 'frontend.out.log'
-$frontendErr = Join-Path $logsPath 'frontend.err.log'
+$frontendErr = Join-Path $logsPath "frontend-$runStamp.err.log"
+$frontendOut = Join-Path $logsPath "frontend-$runStamp.out.log"
 New-Item -ItemType File -Force -Path $frontendOut, $frontendErr | Out-Null
 
 Write-Host 'Starting frontend...'
@@ -176,6 +191,18 @@ $frontendProcess = Start-HiddenProcess `
   -WorkingDirectory $root `
   -StdOut $frontendOut `
   -StdErr $frontendErr
+
+$state = @{
+  backendPid = $backendProcess.Id
+  frontendPid = $frontendProcess.Id
+  backendOut = $backendOut
+  backendErr = $backendErr
+  frontendOut = $frontendOut
+  frontendErr = $frontendErr
+  startedAt = (Get-Date).ToString('o')
+} | ConvertTo-Json -Depth 3
+
+Set-Content -Path $statePath -Value $state -Encoding utf8
 
 if (-not $SkipBrowser) {
   Start-Sleep -Seconds 3
@@ -188,5 +215,7 @@ Write-Host 'Frontend: http://localhost:3000'
 Write-Host 'Backend:   http://localhost:5000'
 Write-Host "Logs:      $logsPath"
 Write-Host 'MongoDB:   local Windows service on localhost:27017'
+Write-Host 'Admin:     admin@insurance.com / Admin@12345'
+Write-Host "State:     $statePath"
 Write-Host ''
 Write-Host 'To stop the services, use Task Manager or end the npm/node processes listed in the log output.'

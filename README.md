@@ -89,6 +89,12 @@ See [API.md](API.md) for the full endpoint list and response format.
    ```powershell
    .\start-local.ps1
    ```
+8. Stop the local app:
+   ```powershell
+   .\stop-local.ps1
+   ```
+
+The local launcher seeds the sample admin user and insurance plans automatically.
 
 ## Seeded Admin
 

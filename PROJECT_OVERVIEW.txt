@@ -1,0 +1,567 @@
+INSURANCE MANAGEMENT APPLICATION - COMPLETE PROJECT OVERVIEW
+
+1. PROJECT SUMMARY
+
+This repository is a full-stack Insurance Management Application built with:
+- Frontend: React, Vite, React Router, Axios, Material UI, Context API
+- Backend: Node.js, Express.js, JWT authentication, Multer, bcryptjs, express-validator, Winston
+- Database: MongoDB with Mongoose ODM
+- Storage: Local file uploads in /uploads
+- DevOps: Docker, Docker Compose, environment variables, health checks
+
+The application supports two roles:
+- CUSTOMER
+- ADMIN
+
+The system covers the full insurance workflow:
+- Customers register, login, browse plans, apply for insurance, upload documents, and track status
+- Admins manage plans, review applications, verify documents, approve or reject applications, and view reports/dashboards
+
+2. CORE BUSINESS GOALS
+
+The app is designed to manage insurance onboarding and verification in one place:
+- Create and maintain insurance plans
+- Allow customers to submit applications against a selected plan
+- Allow customers to upload required documents
+- Let admins verify documents before approval
+- Notify customers about key events
+- Provide dashboards for both customer and admin users
+- Support reporting, filtering, search, and pagination for admin workflows
+
+3. TECHNOLOGY STACK
+
+Frontend
+- React 18
+- Vite
+- React Router DOM
+- Axios
+- Material UI
+- Context API
+
+Backend
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT access and refresh tokens
+- bcryptjs password hashing
+- multer file uploads
+- express-validator
+- Winston logging
+- helmet, cors, rate limiting
+
+Deployment
+- Dockerfile for backend
+- Dockerfile for frontend
+- docker-compose.yml for local full-stack orchestration
+
+4. REPOSITORY STRUCTURE
+
+Top-level files:
+- package.json: workspace root
+- docker-compose.yml: full stack container orchestration
+- README.md: project instructions
+- API.md: endpoint documentation
+- start-local.ps1: Windows local launcher
+- stop-local.ps1: Windows local stop script
+- PROJECT_OVERVIEW.txt: this file
+
+Backend:
+- backend/package.json
+- backend/.env.example
+- backend/Dockerfile
+- backend/seed/seed.js
+- backend/src
+
+Frontend:
+- frontend/package.json
+- frontend/.env.example
+- frontend/Dockerfile
+- frontend/nginx.conf
+- frontend/index.html
+- frontend/src
+
+5. BACKEND ARCHITECTURE
+
+The backend follows a layered structure:
+- Routes: define REST endpoints and middleware chains
+- Controllers: receive requests and call services
+- Services: contain business logic
+- Repositories: encapsulate database access
+- Models: Mongoose schemas
+- Middleware: authentication, validation, uploads, and error handling
+- Utils: reusable helpers
+
+Main backend boot flow:
+- backend/src/server.js starts the app
+- backend/src/config/env.js loads and validates environment variables
+- backend/src/config/db.js connects to MongoDB
+- backend/src/app.js configures Express, security middleware, logging, static upload serving, routes, and error handlers
+
+6. BACKEND MODULES
+
+Authentication module
+- Registration
+- Login
+- Refresh token exchange
+- Logout
+- Get current user profile
+
+Authorization
+- Role-based access control using CUSTOMER and ADMIN
+- Protect middleware validates JWT access tokens
+- Authorize middleware checks allowed roles
+
+Insurance plan module
+- Public plan browsing
+- Single plan details
+- Admin create, update, delete, list all plans
+
+Insurance application module
+- Customer submits a new insurance application
+- Application includes personal, address, and nominee information
+- Application status lifecycle:
+  - SUBMITTED
+  - PENDING_VERIFICATION
+  - APPROVED
+  - REJECTED
+- Admin can search and filter applications
+- Pagination is supported for admin list views
+
+Document management module
+- Customer uploads documents for a specific application
+- Supported document types:
+  - IDENTITY_PROOF
+  - ADDRESS_PROOF
+  - INCOME_PROOF
+  - SUPPORTING_DOCUMENT
+- Supported file formats:
+  - PDF
+  - JPG
+  - PNG
+- Document status lifecycle:
+  - UPLOADED
+  - UNDER_VERIFICATION
+  - VERIFIED
+  - REJECTED
+- Admin can verify or reject documents
+- Rejected documents can be replaced by the customer
+
+Notification module
+- Automatic notifications for:
+  - Application submitted
+  - Application approved
+  - Application rejected
+  - Document uploaded
+  - Document verified
+  - Document rejected
+- Customers can view and mark notifications read
+
+Dashboard module
+- Customer dashboard:
+  - total applications
+  - current status
+  - uploaded document count
+  - recent notifications
+  - unread notification count
+- Admin dashboard:
+  - total applications
+  - pending applications
+  - approved applications
+  - rejected applications
+  - pending verifications
+
+Reports module
+- Admin can fetch summary counts:
+  - total applications
+  - approved applications
+  - rejected applications
+  - pending applications
+
+7. BACKEND DATA MODEL
+
+User model
+- name
+- email
+- passwordHash
+- role
+- refreshTokenVersion
+- isActive
+- timestamps
+- indexed email
+
+InsurancePlan model
+- planName
+- description
+- coverageAmount
+- premiumAmount
+- eligibilityCriteria
+- benefits
+- isActive
+- timestamps
+- unique planName
+
+InsuranceApplication model
+- applicationNumber
+- customer reference to User
+- selectedPlan reference to InsurancePlan
+- personalInformation object
+- addressInformation object
+- nomineeInformation object
+- status
+- approvalComments
+- rejectionReason
+- reviewedBy reference to User
+- submittedAt
+- timestamps
+
+Document model
+- application reference to InsuranceApplication
+- customer reference to User
+- documentName
+- documentType
+- filePath
+- originalName
+- mimeType
+- status
+- rejectionReason
+- reviewedBy reference to User
+- timestamps
+
+Notification model
+- user reference to User
+- message
+- category
+- metadata
+- read
+- timestamps
+
+8. BACKEND FILE UPLOAD DESIGN
+
+Uploads are stored locally inside:
+- backend/uploads
+
+The upload middleware:
+- Uses multer disk storage
+- Restricts file types to PDF, JPG, PNG
+- Enforces a 10 MB file size limit
+- Creates unique filenames
+
+Static serving:
+- /uploads is exposed as a static path from the backend
+
+9. BACKEND SECURITY
+
+Implemented security controls:
+- JWT auth for protected routes
+- Refresh token support
+- bcryptjs password hashing
+- helmet for secure headers
+- cors configured by CLIENT_ORIGIN
+- express-rate-limit for request throttling
+- express-validator for request validation
+- RBAC for admin and customer access
+
+10. BACKEND ERROR HANDLING
+
+The backend returns consistent JSON responses:
+{
+  "success": true,
+  "message": "Application submitted",
+  "data": {}
+}
+
+Error handling includes:
+- Custom ApiError class
+- Async wrapper for route handlers
+- Validation middleware
+- Global not-found middleware
+- Global error handler
+- Winston logging for request/error visibility
+
+11. BACKEND ROUTES
+
+Base version prefix:
+- /api/v1
+
+Authentication:
+- POST /api/v1/auth/register
+- POST /api/v1/auth/login
+- POST /api/v1/auth/refresh
+- POST /api/v1/auth/logout
+- GET /api/v1/auth/me
+
+Plans:
+- GET /api/v1/plans
+- GET /api/v1/plans/:id
+- GET /api/v1/plans/admin
+- POST /api/v1/plans
+- PUT /api/v1/plans/:id
+- DELETE /api/v1/plans/:id
+
+Applications:
+- POST /api/v1/applications
+- GET /api/v1/applications/mine
+- GET /api/v1/applications/admin
+- GET /api/v1/applications/:id
+- PATCH /api/v1/applications/:id/review
+
+Documents:
+- GET /api/v1/documents/mine
+- GET /api/v1/documents/application/:applicationId
+- GET /api/v1/documents/:id
+- POST /api/v1/documents/applications/:applicationId
+- PUT /api/v1/documents/:id/replace
+- PATCH /api/v1/documents/:id/review
+
+Notifications:
+- GET /api/v1/notifications/mine
+- PATCH /api/v1/notifications/:id/read
+- PATCH /api/v1/notifications/read-all
+
+Reports:
+- GET /api/v1/reports/summary
+
+Dashboard:
+- GET /api/v1/dashboard/customer
+- GET /api/v1/dashboard/admin
+
+Health:
+- GET /health
+
+12. FRONTEND ARCHITECTURE
+
+The frontend is a React SPA built with Vite and Material UI.
+
+Main frontend boot flow:
+- frontend/src/main.jsx wraps the app in ThemeProvider, BrowserRouter, and AuthProvider
+- frontend/src/App.jsx defines routes and layout composition
+- frontend/src/context/AuthContext.jsx manages auth state and token persistence
+- frontend/src/api/axios.js configures Axios with access token injection and refresh handling
+
+Layout structure:
+- AuthLayout for login/register pages
+- DashboardLayout for authenticated customer/admin views
+- Navbar, Sidebar, Footer shared components
+
+13. FRONTEND PAGES
+
+Authentication
+- /login
+- /register
+
+Customer pages
+- /customer
+- /customer/plans
+- /customer/plans/:id
+- /customer/apply/:planId
+- /customer/documents
+- /customer/notifications
+- /customer/profile
+
+Admin pages
+- /admin
+- /admin/applications
+- /admin/applications/:id
+- /admin/plans
+- /admin/reports
+
+14. FRONTEND COMPONENTS
+
+Shared components:
+- Navbar
+- Sidebar
+- Footer
+- ProtectedRoute
+- Loader
+- NotificationPanel
+- SearchFilters
+- StatCard
+- PageHeader
+
+These components provide:
+- responsive navigation
+- role-aware menus
+- page framing
+- loading states
+- reusable filters and cards
+
+15. FRONTEND AUTH BEHAVIOR
+
+Authentication flow:
+- Login and register call backend auth endpoints
+- accessToken, refreshToken, and user are stored in localStorage
+- Axios request interceptor injects the access token
+- Axios response interceptor uses refresh token flow on 401 responses
+- If refresh fails, local auth state is cleared
+
+Protected access:
+- ProtectedRoute prevents unauthenticated access
+- Role checks prevent customers from entering admin routes and vice versa
+
+16. FRONTEND UI DESIGN
+
+Visual style:
+- Light, modern dashboard aesthetic
+- Green and orange accent palette
+- Gradient background surfaces
+- Google fonts: Space Grotesk and Source Sans 3
+- Rounded Material UI cards and controls
+
+Responsive behavior:
+- Works on desktop and mobile
+- Sidebar and content layout adapt to screen size
+- Forms and tables stack appropriately on smaller screens
+
+17. LOCAL DEVELOPMENT
+
+Recommended local setup:
+1. Install workspace dependencies:
+   - npm install --workspaces
+2. Seed the database:
+   - npm run seed --workspace backend
+3. Run the backend:
+   - npm run dev --workspace backend
+4. Run the frontend:
+   - npm run dev --workspace frontend
+
+Windows convenience scripts:
+- start-local.ps1 starts MongoDB service, seeds data, and launches backend + frontend
+- stop-local.ps1 stops the launched local processes
+
+Important local assumption:
+- The launcher expects a local MongoDB Windows service named MongoDB running on localhost:27017
+
+18. DEFAULT ADMIN CREDENTIALS
+
+The seeded admin user is:
+- Email: admin@insurance.com
+- Password: Admin@12345
+
+This admin user is created by:
+- backend/seed/seed.js
+- start-local.ps1 also runs the seed automatically
+
+19. SEED DATA
+
+Seed script creates:
+- One admin user
+- Four insurance plans:
+  - Health Insurance
+  - Life Insurance
+  - Vehicle Insurance
+  - Home Insurance
+
+The plan data includes:
+- description
+- coverage amount
+- premium amount
+- eligibility criteria
+- benefits
+
+20. DOCKER AND DEPLOYMENT
+
+Docker services:
+- frontend on port 3000
+- backend on port 5000
+- mongodb on port 27017
+
+Production behavior:
+- frontend uses Nginx in the final image
+- backend uses Node.js production image
+- MongoDB uses a named volume
+- backend uploads are stored in a named volume
+- health checks are configured for all services
+
+Note:
+- In this environment, Docker Desktop is not running, so the app is intended to run locally through the Windows service path unless Docker is started separately.
+
+21. IMPORTANT FILES TO KNOW
+
+Backend:
+- backend/src/app.js
+- backend/src/server.js
+- backend/src/config/env.js
+- backend/src/config/db.js
+- backend/src/middleware/auth.js
+- backend/src/middleware/upload.js
+- backend/src/middleware/errorHandler.js
+- backend/src/services/*
+- backend/src/controllers/*
+- backend/src/routes/*
+- backend/src/models/*
+- backend/seed/seed.js
+
+Frontend:
+- frontend/src/App.jsx
+- frontend/src/main.jsx
+- frontend/src/context/AuthContext.jsx
+- frontend/src/api/axios.js
+- frontend/src/layouts/*
+- frontend/src/components/*
+- frontend/src/pages/*
+- frontend/src/theme/theme.js
+
+Operational scripts:
+- start-local.ps1
+- stop-local.ps1
+
+22. CURRENT LIMITATIONS / ASSUMPTIONS
+
+- The project is built without a test suite.
+- MongoDB is assumed to be available locally as a Windows service for the start-local.ps1 flow.
+- Uploaded files are stored locally, so production persistence should be moved to durable storage in a real deployment.
+- The frontend bundle is split with lazy loading, but the app still uses a single Vite SPA deployment.
+- Some business workflows can be expanded further, such as richer document rejection reasons, audit history, and email notifications.
+
+23. HOW TO USE THIS PROJECT
+
+For a user:
+- Register as a customer
+- Log in
+- View insurance plans
+- Select a plan and submit an application
+- Upload documents
+- Monitor notifications and dashboard status
+
+For an admin:
+- Log in with the seeded admin account
+- Review applications
+- Verify/reject documents
+- Approve/reject applications
+- Create or update plans
+- Review dashboards and reports
+
+24. QUICK START SUMMARY
+
+If using the local Windows scripts:
+- Run: .\start-local.ps1
+- Open frontend: http://localhost:3000
+- Backend health: http://localhost:5000/health
+- Admin login: admin@insurance.com / Admin@12345
+- Stop: .\stop-local.ps1
+
+25. HANDOFF NOTE FOR ANOTHER LLM
+
+This is a complete insurance workflow system with:
+- a React frontend
+- an Express/Mongo backend
+- JWT authentication with refresh tokens
+- role-based authorization
+- document upload and review
+- notifications
+- dashboards
+- reporting
+- Docker support
+- local Windows launch and stop scripts
+
+The most important implementation references are:
+- backend/src/app.js for server setup
+- backend/src/routes/index.js for API routing
+- backend/src/services/* for business logic
+- backend/src/models/* for data structures
+- frontend/src/App.jsx for the full SPA route tree
+- frontend/src/context/AuthContext.jsx for auth state
+- frontend/src/api/axios.js for token refresh behavior
+
+END OF PROJECT OVERVIEW
