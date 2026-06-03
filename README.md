@@ -85,6 +85,10 @@ See [API.md](API.md) for the full endpoint list and response format.
    ```bash
    npm run dev --workspace frontend
    ```
+7. Or start everything from one script on Windows:
+   ```powershell
+   .\start-local.ps1
+   ```
 
 ## Seeded Admin
 
