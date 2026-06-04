@@ -99,6 +99,7 @@ See [API.md](API.md) for the full endpoint list and response format.
    ```
 
 The local launcher seeds the sample admin user and insurance plans automatically.
+The backend also seeds the same default admin and plans automatically on application startup, so fresh databases are initialized without manual steps.
 
 ## Seeded Admin
 
