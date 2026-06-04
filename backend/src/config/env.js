@@ -1,5 +1,9 @@
 const dotenv = require('dotenv');
+const path = require('path');
 
+dotenv.config({
+  path: path.resolve(__dirname, '../../.env')
+});
 dotenv.config();
 
 const required = ['MONGODB_URI', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
