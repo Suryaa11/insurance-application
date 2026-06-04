@@ -8,6 +8,7 @@ const { upload } = require('../middleware/upload');
 
 router.get('/mine', protect, documentController.mine);
 router.get('/application/:applicationId', protect, documentController.byApplication);
+router.get('/:id/access-url', protect, documentController.accessUrl);
 router.get('/:id', protect, documentController.getById);
 router.post(
   '/applications/:applicationId',

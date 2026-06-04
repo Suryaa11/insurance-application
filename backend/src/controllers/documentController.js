@@ -25,6 +25,10 @@ const documentController = {
     const document = await documentService.getById(req.params.id, req.user);
     return sendResponse(res, 200, 'Document fetched', document);
   }),
+  accessUrl: asyncHandler(async (req, res) => {
+    const result = await documentService.getAccessUrl(req.params.id, req.user);
+    return sendResponse(res, 200, 'Access URL generated', result);
+  }),
   replaceRejected: asyncHandler(async (req, res) => {
     const document = await documentService.replaceRejected({
       documentId: req.params.id,

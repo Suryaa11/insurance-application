@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Chip, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import api, { assetBaseUrl } from '../../api/axios';
+import api from '../../api/axios';
 import Loader from '../../components/Loader';
 import PageHeader from '../../components/PageHeader';
 
@@ -112,7 +112,14 @@ export default function ApplicationDetailsPage() {
                         {document.documentType} · {document.originalName}
                       </Typography>
                       <Stack direction="row" spacing={1} flexWrap="wrap">
-                        <Button href={`${assetBaseUrl}${document.filePath}`} target="_blank">Open</Button>
+                        <Button
+                          onClick={async () => {
+                            const { data } = await api.get(`/documents/${document._id}/access-url`);
+                            window.open(data.data.url, '_blank', 'noopener,noreferrer');
+                          }}
+                        >
+                          Open
+                        </Button>
                         <Button
                           variant="contained"
                           onClick={() => reviewDocument(document._id)}

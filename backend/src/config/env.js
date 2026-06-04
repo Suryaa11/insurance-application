@@ -20,5 +20,7 @@ module.exports = {
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
-  logLevel: process.env.LOG_LEVEL || 'info'
+  logLevel: process.env.LOG_LEVEL || 'info',
+  azureStorageConnectionString: process.env.AZURE_STORAGE_CONNECTION_STRING || '',
+  azureStorageContainerName: process.env.AZURE_STORAGE_CONTAINER_NAME || ''
 };

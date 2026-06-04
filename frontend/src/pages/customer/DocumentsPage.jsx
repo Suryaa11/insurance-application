@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material';
-import api, { assetBaseUrl } from '../../api/axios';
+import api from '../../api/axios';
 import PageHeader from '../../components/PageHeader';
+import { Link as RouterLink } from 'react-router-dom';
 
 export default function DocumentsPage() {
   const [applications, setApplications] = useState([]);
@@ -9,16 +10,28 @@ export default function DocumentsPage() {
   const [selectedApplication, setSelectedApplication] = useState('');
   const [form, setForm] = useState({ documentName: '', documentType: 'IDENTITY_PROOF', file: null });
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
-    const [apps, docs] = await Promise.all([
-      api.get('/applications/mine'),
-      api.get('/documents/mine')
-    ]);
-    setApplications(apps.data.data);
-    setDocuments(docs.data.data);
-    if (!selectedApplication && apps.data.data[0]?._id) {
-      setSelectedApplication(apps.data.data[0]._id);
+    setLoading(true);
+    try {
+      const [apps, docs] = await Promise.all([
+        api.get('/applications/mine'),
+        api.get('/documents/mine')
+      ]);
+
+      const applicationList = apps.data.data || [];
+      setApplications(applicationList);
+      setDocuments(docs.data.data || []);
+
+      setSelectedApplication((current) => {
+        if (current && applicationList.some((application) => application._id === current)) {
+          return current;
+        }
+        return applicationList[0]?._id || '';
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -28,13 +41,21 @@ export default function DocumentsPage() {
 
   const handleUpload = async (event) => {
     event.preventDefault();
+
+    if (!selectedApplication) {
+      setMessage('Create an application first, then upload documents against it.');
+      return;
+    }
+
     const data = new FormData();
     data.append('documentName', form.documentName);
     data.append('documentType', form.documentType);
     data.append('file', form.file);
+
     await api.post(`/documents/applications/${selectedApplication}`, data, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
+
     setMessage('Document uploaded successfully.');
     setForm({ documentName: '', documentType: 'IDENTITY_PROOF', file: null });
     await loadData();
@@ -49,10 +70,24 @@ export default function DocumentsPage() {
     await loadData();
   };
 
+  const openDocument = async (documentId) => {
+    const { data } = await api.get(`/documents/${documentId}/access-url`);
+    window.open(data.data.url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <Box>
       <PageHeader title="Documents" subtitle="Upload, review, and replace rejected documents." />
       {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
+      {!loading && applications.length === 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          You do not have any insurance applications yet. Please create an application from the Plans page before uploading documents.
+          {' '}
+          <Button component={RouterLink} to="/customer/plans" sx={{ ml: 1 }}>
+            Go to Plans
+          </Button>
+        </Alert>
+      )}
       <Grid container spacing={2}>
         <Grid item xs={12} lg={5}>
           <Card>
@@ -64,14 +99,25 @@ export default function DocumentsPage() {
                 value={selectedApplication}
                 onChange={(event) => setSelectedApplication(event.target.value)}
                 required
+                disabled={applications.length === 0}
               >
+                {!applications.length && (
+                  <MenuItem value="">
+                    No applications available
+                  </MenuItem>
+                )}
                 {applications.map((application) => (
                   <MenuItem key={application._id} value={application._id}>
                     {application.applicationNumber}
                   </MenuItem>
                 ))}
               </TextField>
-              <TextField label="Document Name" value={form.documentName} onChange={(e) => setForm({ ...form, documentName: e.target.value })} required />
+              <TextField
+                label="Document Name"
+                value={form.documentName}
+                onChange={(e) => setForm({ ...form, documentName: e.target.value })}
+                required
+              />
               <TextField
                 select
                 label="Document Type"
@@ -85,10 +131,17 @@ export default function DocumentsPage() {
               </TextField>
               <Button variant="outlined" component="label">
                 Choose File
-                <input hidden type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setForm({ ...form, file: e.target.files[0] })} />
+                <input
+                  hidden
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => setForm({ ...form, file: e.target.files[0] })}
+                />
               </Button>
               {form.file && <Typography variant="body2">{form.file.name}</Typography>}
-              <Button type="submit" variant="contained" disabled={!form.file}>Upload</Button>
+              <Button type="submit" variant="contained" disabled={!form.file || !selectedApplication}>
+                Upload
+              </Button>
             </CardContent>
           </Card>
         </Grid>
@@ -108,11 +161,18 @@ export default function DocumentsPage() {
                         {document.documentType} · {document.originalName}
                       </Typography>
                       <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                        <Button size="small" href={`${assetBaseUrl}${document.filePath}`} target="_blank">View</Button>
+                        <Button size="small" onClick={() => openDocument(document._id)}>
+                          View
+                        </Button>
                         {document.status === 'REJECTED' && (
                           <Button size="small" variant="contained" component="label">
                             Replace
-                            <input hidden type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleReplace(document._id, e.target.files[0])} />
+                            <input
+                              hidden
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={(e) => handleReplace(document._id, e.target.files[0])}
+                            />
                           </Button>
                         )}
                       </Stack>

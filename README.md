@@ -14,7 +14,7 @@ Express / JWT / Multer / Winston
 MongoDB + Mongoose
         |
         v
-Local uploads in /uploads
+Azure Blob Storage for document files
 ```
 
 ## Features
@@ -23,6 +23,7 @@ Local uploads in /uploads
 - Role-based access control for `CUSTOMER` and `ADMIN`
 - Insurance plan browsing and application submission
 - Document upload, review, verification, rejection, and replacement
+- Azure Blob Storage for document files, with MongoDB storing only metadata
 - Admin dashboards, reports, search, filtering, and pagination
 - Notification feed for application and document events
 - Winston request and error logging
@@ -73,23 +74,26 @@ See [API.md](API.md) for the full endpoint list and response format.
    cp frontend/.env.example frontend/.env
    ```
 3. Start MongoDB locally or via Docker.
-4. Seed sample data:
+4. Set Azure Blob env vars in `backend/.env` for document uploads:
+   - `AZURE_STORAGE_CONNECTION_STRING`
+   - `AZURE_STORAGE_CONTAINER_NAME`
+5. Seed sample data:
    ```bash
    npm run seed --workspace backend
    ```
-5. Run backend:
+6. Run backend:
    ```bash
    npm run dev --workspace backend
    ```
-6. Run frontend:
+7. Run frontend:
    ```bash
    npm run dev --workspace frontend
    ```
-7. Or start everything from one script on Windows:
+8. Or start everything from one script on Windows:
    ```powershell
    .\start-local.ps1
    ```
-8. Stop the local app:
+9. Stop the local app:
    ```powershell
    .\stop-local.ps1
    ```
@@ -123,7 +127,8 @@ The local launcher seeds the sample admin user and insurance plans automatically
 ## Troubleshooting
 
 - If login fails, confirm the backend is connected to MongoDB and seeded.
-- If uploads fail, ensure the `backend/uploads` folder is writable.
+- If uploads fail, ensure the Azure Blob connection string and container name are set correctly.
+- If uploads fail after moving to Azure, confirm the blob connection string and container name are set.
 - If CORS errors appear, set `CLIENT_ORIGIN` to the exact frontend origin.
 - If the frontend cannot reach the API in Docker, verify `VITE_API_URL` and compose networking.
 

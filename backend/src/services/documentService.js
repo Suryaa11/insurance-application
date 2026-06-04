@@ -4,6 +4,7 @@ const applicationRepository = require('../repositories/applicationRepository');
 const notificationService = require('./notificationService');
 const applicationService = require('./applicationService');
 const { UPLOADED, UNDER_VERIFICATION, VERIFIED, REJECTED } = require('../constants/documentStatus');
+const { uploadBuffer, createBlobReadUrl } = require('../config/blobStorage');
 
 const documentService = {
   upload: async ({ applicationId, customerId, file, documentName, documentType }) => {
@@ -15,12 +16,32 @@ const documentService = {
       throw new ApiError(403, 'Forbidden');
     }
 
+    if (!file || !file.buffer) {
+      throw new ApiError(400, 'File is required');
+    }
+
+    const blobName = `${customerId.toString()}/${applicationId}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
+    const uploaded = await uploadBuffer({
+      buffer: file.buffer,
+      blobName,
+      contentType: file.mimetype,
+      metadata: {
+        documentName,
+        documentType,
+        applicationId: applicationId.toString(),
+        customerId: customerId.toString()
+      }
+    });
+
     const document = await documentRepository.create({
       application: applicationId,
       customer: customerId,
       documentName,
       documentType,
-      filePath: `/uploads/${file.filename}`,
+      filePath: uploaded.blobUrl,
+      blobName: uploaded.blobName,
+      blobUrl: uploaded.blobUrl,
+      storageProvider: 'AZURE_BLOB',
       originalName: file.originalname,
       mimeType: file.mimetype,
       status: UPLOADED
@@ -56,6 +77,26 @@ const documentService = {
     }
     return document;
   },
+  getAccessUrl: async (id, user) => {
+    const document = await documentRepository.findById(id);
+    if (!document) {
+      throw new ApiError(404, 'Document not found');
+    }
+    if (user.role !== 'ADMIN' && document.customer._id.toString() !== user._id.toString()) {
+      throw new ApiError(403, 'Forbidden');
+    }
+
+    if (document.storageProvider !== 'AZURE_BLOB' || !document.blobName) {
+      return { url: document.filePath };
+    }
+
+    const url = await createBlobReadUrl(document.blobName);
+    return {
+      url,
+      originalName: document.originalName,
+      mimeType: document.mimeType
+    };
+  },
   replaceRejected: async ({ documentId, customerId, file, documentName, documentType }) => {
     const document = await documentRepository.findByIdRaw(documentId);
     if (!document) {
@@ -68,10 +109,30 @@ const documentService = {
       throw new ApiError(400, 'Only rejected documents can be replaced');
     }
 
+    if (!file || !file.buffer) {
+      throw new ApiError(400, 'File is required');
+    }
+
+    const blobName = `${customerId.toString()}/${document.application.toString()}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
+    const uploaded = await uploadBuffer({
+      buffer: file.buffer,
+      blobName,
+      contentType: file.mimetype,
+      metadata: {
+        documentName: documentName || document.documentName,
+        documentType: documentType || document.documentType,
+        applicationId: document.application.toString(),
+        customerId: customerId.toString()
+      }
+    });
+
     const updated = await documentRepository.updateById(documentId, {
       documentName: documentName || document.documentName,
       documentType: documentType || document.documentType,
-      filePath: `/uploads/${file.filename}`,
+      filePath: uploaded.blobUrl,
+      blobName: uploaded.blobName,
+      blobUrl: uploaded.blobUrl,
+      storageProvider: 'AZURE_BLOB',
       originalName: file.originalname,
       mimeType: file.mimetype,
       status: UPLOADED,

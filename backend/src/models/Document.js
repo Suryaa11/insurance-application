@@ -30,6 +30,18 @@ const documentSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    blobName: {
+      type: String,
+      default: ''
+    },
+    blobUrl: {
+      type: String,
+      default: ''
+    },
+    storageProvider: {
+      type: String,
+      default: 'AZURE_BLOB'
+    },
     originalName: {
       type: String,
       required: true

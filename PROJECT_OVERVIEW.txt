@@ -6,7 +6,7 @@ This repository is a full-stack Insurance Management Application built with:
 - Frontend: React, Vite, React Router, Axios, Material UI, Context API
 - Backend: Node.js, Express.js, JWT authentication, Multer, bcryptjs, express-validator, Winston
 - Database: MongoDB with Mongoose ODM
-- Storage: Local file uploads in /uploads
+- Storage: Azure Blob Storage for document binaries, MongoDB for metadata
 - DevOps: Docker, Docker Compose, environment variables, health checks
 
 The application supports two roles:
@@ -238,17 +238,16 @@ Notification model
 
 8. BACKEND FILE UPLOAD DESIGN
 
-Uploads are stored locally inside:
-- backend/uploads
+Uploads are stored in Azure Blob Storage.
 
 The upload middleware:
-- Uses multer disk storage
+- Uses multer memory storage
 - Restricts file types to PDF, JPG, PNG
 - Enforces a 10 MB file size limit
-- Creates unique filenames
+- Streams buffers to Azure Blob
 
 Static serving:
-- /uploads is exposed as a static path from the backend
+- The backend generates short-lived signed Azure access URLs for viewing documents
 
 9. BACKEND SECURITY
 
@@ -510,7 +509,7 @@ Operational scripts:
 
 - The project is built without a test suite.
 - MongoDB is assumed to be available locally as a Windows service for the start-local.ps1 flow.
-- Uploaded files are stored locally, so production persistence should be moved to durable storage in a real deployment.
+- Uploaded files are stored in Azure Blob Storage while MongoDB keeps metadata only.
 - The frontend bundle is split with lazy loading, but the app still uses a single Vite SPA deployment.
 - Some business workflows can be expanded further, such as richer document rejection reasons, audit history, and email notifications.
 

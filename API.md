@@ -28,6 +28,7 @@ Base URL: `/api/v1`
 - `GET /documents/mine`
 - `GET /documents/application/:applicationId`
 - `GET /documents/:id`
+- `GET /documents/:id/access-url`
 - `POST /documents/applications/:applicationId`
 - `PUT /documents/:id/replace`
 - `PATCH /documents/:id/review`

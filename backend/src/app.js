@@ -1,20 +1,15 @@
-const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
+const path = require('path');
 const routes = require('./routes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { clientOrigin } = require('./config/env');
 const { logger } = require('./config/logger');
-const { absoluteUploadDir } = require('./middleware/upload');
 
 const app = express();
-
-if (!fs.existsSync(absoluteUploadDir)) {
-  fs.mkdirSync(absoluteUploadDir, { recursive: true });
-}
 
 app.use(helmet());
 app.use(cors({
@@ -37,7 +32,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.use('/uploads', express.static(absoluteUploadDir));
+app.use('/uploads', express.static(path.resolve(__dirname, '../../uploads')));
 app.use('/api/v1', routes);
 
 app.use(notFound);
