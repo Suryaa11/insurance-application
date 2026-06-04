@@ -3,7 +3,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
-const path = require('path');
 const routes = require('./routes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { clientOrigin } = require('./config/env');
@@ -32,7 +31,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.use('/uploads', express.static(path.resolve(__dirname, '../../uploads')));
 app.use('/api/v1', routes);
 
 app.use(notFound);
