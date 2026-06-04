@@ -4,7 +4,16 @@ const {
   StorageSharedKeyCredential,
   generateBlobSASQueryParameters
 } = require('@azure/storage-blob');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
 const { azureStorageConnectionString, azureStorageContainerName } = require('./env');
+
+const localUploadDir = path.resolve(__dirname, '../../uploads');
+
+if (!fs.existsSync(localUploadDir)) {
+  fs.mkdirSync(localUploadDir, { recursive: true });
+}
 
 function parseConnectionString(connectionString) {
   const values = {};
@@ -27,23 +36,39 @@ function parseConnectionString(connectionString) {
 
 function getBlobServiceClient() {
   if (!azureStorageConnectionString) {
-    throw new Error('AZURE_STORAGE_CONNECTION_STRING is required');
+    return null;
   }
   return BlobServiceClient.fromConnectionString(azureStorageConnectionString);
 }
 
 async function getContainerClient() {
   if (!azureStorageContainerName) {
-    throw new Error('AZURE_STORAGE_CONTAINER_NAME is required');
+    return null;
   }
 
-  const containerClient = getBlobServiceClient().getContainerClient(azureStorageContainerName);
+  const serviceClient = getBlobServiceClient();
+  if (!serviceClient) {
+    return null;
+  }
+
+  const containerClient = serviceClient.getContainerClient(azureStorageContainerName);
   await containerClient.createIfNotExists();
   return containerClient;
 }
 
 async function uploadBuffer({ buffer, blobName, contentType, metadata = {} }) {
   const containerClient = await getContainerClient();
+  if (!containerClient) {
+    const safeName = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}-${path.basename(blobName)}`;
+    const localPath = path.join(localUploadDir, safeName);
+    fs.writeFileSync(localPath, buffer);
+    return {
+      blobName: safeName,
+      blobUrl: `/uploads/${safeName}`,
+      storageProvider: 'LOCAL_FILE'
+    };
+  }
+
   const blobClient = containerClient.getBlockBlobClient(blobName);
 
   await blobClient.uploadData(buffer, {
@@ -53,12 +78,17 @@ async function uploadBuffer({ buffer, blobName, contentType, metadata = {} }) {
 
   return {
     blobName,
-    blobUrl: blobClient.url
+    blobUrl: blobClient.url,
+    storageProvider: 'AZURE_BLOB'
   };
 }
 
 async function createBlobReadUrl(blobName, expiresInMinutes = 60) {
   const containerClient = await getContainerClient();
+  if (!containerClient) {
+    return `/uploads/${blobName}`;
+  }
+
   const { accountName, accountKey } = parseConnectionString(azureStorageConnectionString);
   const sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
 

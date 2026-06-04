@@ -41,7 +41,7 @@ const documentService = {
       filePath: uploaded.blobUrl,
       blobName: uploaded.blobName,
       blobUrl: uploaded.blobUrl,
-      storageProvider: 'AZURE_BLOB',
+      storageProvider: uploaded.storageProvider || 'AZURE_BLOB',
       originalName: file.originalname,
       mimeType: file.mimetype,
       status: UPLOADED
@@ -132,7 +132,7 @@ const documentService = {
       filePath: uploaded.blobUrl,
       blobName: uploaded.blobName,
       blobUrl: uploaded.blobUrl,
-      storageProvider: 'AZURE_BLOB',
+      storageProvider: uploaded.storageProvider || 'AZURE_BLOB',
       originalName: file.originalname,
       mimeType: file.mimetype,
       status: UPLOADED,
