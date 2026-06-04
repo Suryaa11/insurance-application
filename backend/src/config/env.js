@@ -1,10 +1,19 @@
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
 
-dotenv.config({
-  path: path.resolve(__dirname, '../../.env')
-});
-dotenv.config();
+const envCandidates = [
+  path.resolve(__dirname, '../../.env'),
+  path.resolve(process.cwd(), '.env'),
+  path.resolve(process.cwd(), 'backend/.env'),
+  path.resolve(process.cwd(), '../.env')
+];
+
+for (const envPath of envCandidates) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+  }
+}
 
 const required = ['MONGODB_URI', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
 
