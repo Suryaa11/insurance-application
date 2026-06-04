@@ -92,10 +92,35 @@ function Wait-ForMongoHealthy {
   throw 'Timed out waiting for MongoDB to become healthy'
 }
 
+function Import-EnvFile {
+  param([string]$Path)
+
+  if (-not (Test-Path $Path)) {
+    return
+  }
+
+  foreach ($line in Get-Content $Path) {
+    $trimmed = $line.Trim()
+    if (-not $trimmed -or $trimmed.StartsWith('#')) {
+      continue
+    }
+
+    $parts = $trimmed.Split('=', 2)
+    if ($parts.Count -ne 2) {
+      continue
+    }
+
+    $name = $parts[0].Trim()
+    $value = $parts[1].Trim()
+    [System.Environment]::SetEnvironmentVariable($name, $value, 'Process')
+  }
+}
+
 Ensure-Command npm
 Ensure-Command cmd
 
 New-Item -ItemType Directory -Force -Path $logsPath | Out-Null
+Import-EnvFile -Path (Join-Path $backendPath '.env')
 
 if (-not (Test-Path (Join-Path $root 'node_modules'))) {
   Write-Host 'Installing workspace dependencies...'
@@ -148,6 +173,12 @@ $env:JWT_REFRESH_EXPIRES_IN = '7d'
 $env:CLIENT_ORIGIN = 'http://localhost:3000'
 $env:UPLOAD_DIR = 'uploads'
 $env:LOG_LEVEL = 'info'
+
+if (-not $env:AZURE_STORAGE_CONNECTION_STRING -or -not $env:AZURE_STORAGE_CONTAINER_NAME) {
+  Write-Warning 'Azure storage env vars are missing from backend/.env. Document uploads will fail until they are added.'
+} else {
+  Write-Host "Azure storage container: $($env:AZURE_STORAGE_CONTAINER_NAME)"
+}
 
 Write-Host 'Seeding sample admin and insurance plans...'
 Push-Location $root
