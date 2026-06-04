@@ -2,18 +2,34 @@ const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
 
-const envCandidates = [
-  path.resolve(__dirname, '../../.env'),
-  path.resolve(process.cwd(), '.env'),
-  path.resolve(process.cwd(), 'backend/.env'),
-  path.resolve(process.cwd(), '../.env'),
-  path.resolve(__dirname, '../../backend/.env'),
-  process.env.ENV_FILE && path.resolve(process.env.ENV_FILE)
-].filter(Boolean);
+function collectEnvCandidates() {
+  const candidates = new Set();
+
+  if (process.env.ENV_FILE) {
+    candidates.add(path.resolve(process.env.ENV_FILE));
+  }
+
+  const roots = [process.cwd(), __dirname];
+  for (const startDir of roots) {
+    let currentDir = path.resolve(startDir);
+    while (true) {
+      candidates.add(path.join(currentDir, '.env'));
+      candidates.add(path.join(currentDir, 'backend/.env'));
+
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) {
+        break;
+      }
+      currentDir = parentDir;
+    }
+  }
+
+  return [...candidates];
+}
 
 const loadedEnv = {};
 
-for (const envPath of envCandidates) {
+for (const envPath of collectEnvCandidates()) {
   if (fs.existsSync(envPath)) {
     Object.assign(loadedEnv, dotenv.parse(fs.readFileSync(envPath)));
   }
@@ -27,9 +43,17 @@ for (const [key, value] of Object.entries(loadedEnv)) {
 
 const resolvedAzureConnectionString = process.env.AZURE_STORAGE_CONNECTION_STRING || '';
 const resolvedAzureContainerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'insurance-documents';
+const resolvedAzureAccountName = process.env.AZURE_STORAGE_ACCOUNT_NAME || '';
+const resolvedAzureAccountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY || '';
 
-if (resolvedAzureConnectionString) {
-  process.env.AZURE_STORAGE_CONNECTION_STRING = resolvedAzureConnectionString;
+const effectiveAzureConnectionString = resolvedAzureConnectionString || (
+  resolvedAzureAccountName && resolvedAzureAccountKey
+    ? `DefaultEndpointsProtocol=https;AccountName=${resolvedAzureAccountName};AccountKey=${resolvedAzureAccountKey};EndpointSuffix=core.windows.net`
+    : ''
+);
+
+if (effectiveAzureConnectionString) {
+  process.env.AZURE_STORAGE_CONNECTION_STRING = effectiveAzureConnectionString;
 }
 if (resolvedAzureContainerName) {
   process.env.AZURE_STORAGE_CONTAINER_NAME = resolvedAzureContainerName;
@@ -54,6 +78,6 @@ module.exports = {
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
   logLevel: process.env.LOG_LEVEL || 'info',
-  azureStorageConnectionString: resolvedAzureConnectionString,
+  azureStorageConnectionString: effectiveAzureConnectionString,
   azureStorageContainerName: resolvedAzureContainerName
 };

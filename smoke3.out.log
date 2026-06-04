@@ -1,0 +1,10 @@
+{"level":"info","message":"MongoDB connected","timestamp":"2026-06-04T08:39:31.764Z"}
+{"level":"info","message":"Default admin user already exists","timestamp":"2026-06-04T08:39:31.827Z"}
+{"level":"info","message":"Seeded default insurance plans","timestamp":"2026-06-04T08:39:31.879Z"}
+{"level":"info","message":"Document storage mode: Azure Blob (insurance-documents)","timestamp":"2026-06-04T08:39:31.880Z"}
+{"level":"info","message":"Server running on port 5005","timestamp":"2026-06-04T08:39:31.893Z"}
+{"level":"info","message":"127.0.0.1 - - [04/Jun/2026:08:39:32 +0000] \"GET /api/v1/plans HTTP/1.1\" 200 1853 \"-\" \"Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.19041.6456\"","timestamp":"2026-06-04T08:39:32.157Z"}
+{"level":"info","message":"127.0.0.1 - - [04/Jun/2026:08:39:33 +0000] \"POST /api/v1/auth/register HTTP/1.1\" 201 752 \"-\" \"Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.19041.6456\"","timestamp":"2026-06-04T08:39:33.267Z"}
+{"level":"info","message":"127.0.0.1 - - [04/Jun/2026:08:39:33 +0000] \"GET /api/v1/plans HTTP/1.1\" 200 1853 \"-\" \"Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.19041.6456\"","timestamp":"2026-06-04T08:39:33.281Z"}
+{"level":"info","message":"127.0.0.1 - - [04/Jun/2026:08:39:33 +0000] \"POST /api/v1/applications HTTP/1.1\" 201 1317 \"-\" \"Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.19041.6456\"","timestamp":"2026-06-04T08:39:33.364Z"}
+{"level":"info","message":"127.0.0.1 - - [04/Jun/2026:08:39:33 +0000] \"POST /api/v1/documents/applications/6a2139c552edf4b24c3315f9 HTTP/1.1\" 201 1649 \"-\" \"-\"","timestamp":"2026-06-04T08:39:33.824Z"}
