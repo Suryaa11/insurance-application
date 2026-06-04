@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Box, Button, Card, CardContent, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Grid, Stack, TextField, Typography } from '@mui/material';
 import api from '../../api/axios';
 import PageHeader from '../../components/PageHeader';
 import { Link as RouterLink } from 'react-router-dom';
@@ -94,24 +94,14 @@ export default function DocumentsPage() {
             <CardContent component="form" onSubmit={handleUpload} sx={{ display: 'grid', gap: 2 }}>
               <Typography variant="h6">Upload Document</Typography>
               <TextField
-                select
                 label="Application"
-                value={selectedApplication}
-                onChange={(event) => setSelectedApplication(event.target.value)}
-                required
-                disabled={applications.length === 0}
-              >
-                {!applications.length && (
-                  <MenuItem value="">
-                    No applications available
-                  </MenuItem>
-                )}
-                {applications.map((application) => (
-                  <MenuItem key={application._id} value={application._id}>
-                    {application.applicationNumber}
-                  </MenuItem>
-                ))}
-              </TextField>
+                value={
+                  applications.find((application) => application._id === selectedApplication)?.applicationNumber
+                  || 'Latest application auto-selected'
+                }
+                disabled
+                helperText="Documents are uploaded against your latest application automatically."
+              />
               <TextField
                 label="Document Name"
                 value={form.documentName}
