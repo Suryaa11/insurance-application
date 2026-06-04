@@ -77,6 +77,7 @@ See [API.md](API.md) for the full endpoint list and response format.
 4. Set Azure Blob env vars in `backend/.env` for document uploads:
    - `AZURE_STORAGE_CONNECTION_STRING`
    - `AZURE_STORAGE_CONTAINER_NAME`
+   The backend container in `docker-compose.yml` reads `backend/.env` when it exists, so those values are required for Azure uploads in Docker too.
 5. Seed sample data:
    ```bash
    npm run seed --workspace backend

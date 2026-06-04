@@ -4,6 +4,9 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     restart: unless-stopped
+    env_file:
+      - path: backend/.env
+        required: false
     ports:
       - "5000:5000"
     environment:
