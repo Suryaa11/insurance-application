@@ -7,6 +7,8 @@ const {
 const path = require('path');
 const { azureStorageConnectionString, azureStorageContainerName } = require('./env');
 
+const defaultContainerName = 'insurance-documents';
+
 function parseConnectionString(connectionString) {
   const values = {};
   for (const part of connectionString.split(';')) {
@@ -34,11 +36,13 @@ function getBlobServiceClient() {
 }
 
 async function getContainerClient() {
-  if (!azureStorageContainerName) {
+  const containerName = azureStorageContainerName || defaultContainerName;
+
+  if (!containerName) {
     throw new Error('AZURE_STORAGE_CONTAINER_NAME is required for document uploads');
   }
 
-  const containerClient = getBlobServiceClient().getContainerClient(azureStorageContainerName);
+  const containerClient = getBlobServiceClient().getContainerClient(containerName);
   await containerClient.createIfNotExists();
   return containerClient;
 }
@@ -63,10 +67,11 @@ async function createBlobReadUrl(blobName, expiresInMinutes = 60) {
   const containerClient = await getContainerClient();
   const { accountName, accountKey } = parseConnectionString(azureStorageConnectionString);
   const sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
+  const containerName = azureStorageContainerName || defaultContainerName;
 
   const sasToken = generateBlobSASQueryParameters(
     {
-      containerName: azureStorageContainerName,
+      containerName,
       blobName,
       permissions: BlobSASPermissions.parse('r'),
       startsOn: new Date(Date.now() - 5 * 60 * 1000),

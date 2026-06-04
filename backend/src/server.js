@@ -7,8 +7,9 @@ const { seedDefaultData } = require('./services/seedService');
 async function start() {
   await connectDb();
   await seedDefaultData();
-  if (azureStorageConnectionString && azureStorageContainerName) {
-    logger.info(`Document storage mode: Azure Blob (${azureStorageContainerName})`);
+  const effectiveContainerName = azureStorageContainerName || 'insurance-documents';
+  if (azureStorageConnectionString) {
+    logger.info(`Document storage mode: Azure Blob (${effectiveContainerName})`);
   } else {
     logger.warn('Document storage mode: Azure Blob is not configured; uploads will fail until backend env vars are set');
   }

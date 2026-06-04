@@ -35,5 +35,5 @@ module.exports = {
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
   logLevel: process.env.LOG_LEVEL || 'info',
   azureStorageConnectionString: process.env.AZURE_STORAGE_CONNECTION_STRING || '',
-  azureStorageContainerName: process.env.AZURE_STORAGE_CONTAINER_NAME || ''
+  azureStorageContainerName: process.env.AZURE_STORAGE_CONTAINER_NAME || 'insurance-documents'
 };
