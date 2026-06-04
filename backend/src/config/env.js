@@ -3,28 +3,20 @@ const path = require('path');
 const fs = require('fs');
 
 function collectEnvCandidates() {
-  const candidates = new Set();
+  const candidates = [];
 
   if (process.env.ENV_FILE) {
-    candidates.add(path.resolve(process.env.ENV_FILE));
+    candidates.push(path.resolve(process.env.ENV_FILE));
   }
 
-  const roots = [process.cwd(), __dirname];
-  for (const startDir of roots) {
-    let currentDir = path.resolve(startDir);
-    while (true) {
-      candidates.add(path.join(currentDir, '.env'));
-      candidates.add(path.join(currentDir, 'backend/.env'));
+  candidates.push(
+    path.resolve(process.cwd(), 'backend/.env'),
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(__dirname, '../../backend/.env'),
+    path.resolve(__dirname, '../../.env')
+  );
 
-      const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) {
-        break;
-      }
-      currentDir = parentDir;
-    }
-  }
-
-  return [...candidates];
+  return [...new Set(candidates)];
 }
 
 const loadedEnv = {};
@@ -36,7 +28,7 @@ for (const envPath of collectEnvCandidates()) {
 }
 
 for (const [key, value] of Object.entries(loadedEnv)) {
-  if (value !== undefined && value !== '') {
+  if ((process.env[key] === undefined || process.env[key] === '') && value !== undefined && value !== '') {
     process.env[key] = value;
   }
 }
