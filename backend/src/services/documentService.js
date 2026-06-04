@@ -21,17 +21,22 @@ const documentService = {
     }
 
     const blobName = `${customerId.toString()}/${applicationId}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
-    const uploaded = await uploadBuffer({
-      buffer: file.buffer,
-      blobName,
-      contentType: file.mimetype,
-      metadata: {
-        documentName,
-        documentType,
-        applicationId: applicationId.toString(),
-        customerId: customerId.toString()
-      }
-    });
+    let uploaded;
+    try {
+      uploaded = await uploadBuffer({
+        buffer: file.buffer,
+        blobName,
+        contentType: file.mimetype,
+        metadata: {
+          documentname: documentName,
+          documenttype: documentType,
+          applicationid: applicationId.toString(),
+          customerid: customerId.toString()
+        }
+      });
+    } catch (error) {
+      throw new ApiError(502, `Azure Blob upload failed: ${error.message}`);
+    }
 
     const document = await documentRepository.create({
       application: applicationId,
@@ -114,17 +119,22 @@ const documentService = {
     }
 
     const blobName = `${customerId.toString()}/${document.application.toString()}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
-    const uploaded = await uploadBuffer({
-      buffer: file.buffer,
-      blobName,
-      contentType: file.mimetype,
-      metadata: {
-        documentName: documentName || document.documentName,
-        documentType: documentType || document.documentType,
-        applicationId: document.application.toString(),
-        customerId: customerId.toString()
-      }
-    });
+    let uploaded;
+    try {
+      uploaded = await uploadBuffer({
+        buffer: file.buffer,
+        blobName,
+        contentType: file.mimetype,
+        metadata: {
+          documentname: documentName || document.documentName,
+          documenttype: documentType || document.documentType,
+          applicationid: document.application.toString(),
+          customerid: customerId.toString()
+        }
+      });
+    } catch (error) {
+      throw new ApiError(502, `Azure Blob upload failed: ${error.message}`);
+    }
 
     const updated = await documentRepository.updateById(documentId, {
       documentName: documentName || document.documentName,

@@ -52,27 +52,39 @@ export default function DocumentsPage() {
     data.append('documentType', form.documentType);
     data.append('file', form.file);
 
-    await api.post(`/documents/applications/${selectedApplication}`, data, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    try {
+      await api.post(`/documents/applications/${selectedApplication}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
 
-    setMessage('Document uploaded successfully.');
-    setForm({ documentName: '', documentType: 'IDENTITY_PROOF', file: null });
-    await loadData();
+      setMessage('Document uploaded successfully.');
+      setForm({ documentName: '', documentType: 'IDENTITY_PROOF', file: null });
+      await loadData();
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Document upload failed.');
+    }
   };
 
   const handleReplace = async (documentId, file) => {
     const data = new FormData();
     data.append('file', file);
-    await api.put(`/documents/${documentId}/replace`, data, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    await loadData();
+    try {
+      await api.put(`/documents/${documentId}/replace`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      await loadData();
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Document replace failed.');
+    }
   };
 
   const openDocument = async (documentId) => {
-    const { data } = await api.get(`/documents/${documentId}/access-url`);
-    window.open(data.data.url, '_blank', 'noopener,noreferrer');
+    try {
+      const { data } = await api.get(`/documents/${documentId}/access-url`);
+      window.open(data.data.url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Unable to open document.');
+    }
   };
 
   return (
